@@ -517,7 +517,7 @@ export async function copyEnv(
     }
     case 'fish': {
       clipboard.writeText(
-        `set -xg http_proxy http://${host || '127.0.0.1'}:${mixedPort} && set -xg https_proxy http://${host || '127.0.0.1'}:${mixedPort} && set -xg no_proxy ${bypass.join(',')}`
+        `set -xg http_proxy "http://${host || '127.0.0.1'}:${mixedPort}" && set -xg https_proxy "http://${host || '127.0.0.1'}:${mixedPort}" && set -xg no_proxy "${bypass.join(',')}"`
       )
       break
     }

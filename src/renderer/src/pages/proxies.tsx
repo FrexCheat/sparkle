@@ -19,6 +19,8 @@ import CollapseInput from '@renderer/components/base/collapse-input'
 import { includesIgnoreCase } from '@renderer/utils/includes'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 
+const runtimeGroupOpenState = new Map<string, boolean>()
+
 const Proxies: React.FC = () => {
   const { controledMihomoConfig } = useControledMihomoConfig()
   const { mode = 'rule' } = controledMihomoConfig || {}
@@ -35,7 +37,9 @@ const Proxies: React.FC = () => {
     delayTestConcurrency = 50
   } = appConfig || {}
   const [cols, setCols] = useState(1)
-  const [isOpen, setIsOpen] = useState(Array(groups.length).fill(false))
+  const [isOpen, setIsOpen] = useState<boolean[]>(() =>
+    groups.map((group) => runtimeGroupOpenState.get(group.name) ?? false)
+  )
   const [delaying, setDelaying] = useState(Array(groups.length).fill(false))
   const [searchValue, setSearchValue] = useState(Array(groups.length).fill(''))
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false)
@@ -108,6 +112,8 @@ const Proxies: React.FC = () => {
         setIsOpen((prev) => {
           const newOpen = [...prev]
           newOpen[index] = true
+          const groupName = groups[index]?.name
+          if (groupName) runtimeGroupOpenState.set(groupName, true)
           return newOpen
         })
       }
@@ -159,13 +165,19 @@ const Proxies: React.FC = () => {
     }
   }, [])
 
-  const toggleOpen = useCallback((index: number) => {
-    setIsOpen((prev) => {
-      const newOpen = [...prev]
-      newOpen[index] = !prev[index]
-      return newOpen
-    })
-  }, [])
+  const toggleOpen = useCallback(
+    (index: number) => {
+      setIsOpen((prev) => {
+        const newOpen = [...prev]
+        const open = !prev[index]
+        newOpen[index] = open
+        const groupName = groups[index]?.name
+        if (groupName) runtimeGroupOpenState.set(groupName, open)
+        return newOpen
+      })
+    },
+    [groups]
+  )
 
   const updateSearchValue = useCallback((index: number, value: string) => {
     setSearchValue((prev) => {
@@ -181,6 +193,8 @@ const Proxies: React.FC = () => {
         setIsOpen((prev) => {
           const newOpen = [...prev]
           newOpen[index] = true
+          const groupName = groups[index]?.name
+          if (groupName) runtimeGroupOpenState.set(groupName, true)
           return newOpen
         })
       }
@@ -198,6 +212,15 @@ const Proxies: React.FC = () => {
     },
     [isOpen, groupCounts, allProxies, groups, cols]
   )
+
+  useEffect(() => {
+    setIsOpen((prev) => {
+      const nextOpen = groups.map((group) => runtimeGroupOpenState.get(group.name) ?? false)
+      const isUnchanged =
+        nextOpen.length === prev.length && nextOpen.every((open, index) => open === prev[index])
+      return isUnchanged ? prev : nextOpen
+    })
+  }, [groups])
 
   useEffect(() => {
     if (proxyCols !== 'auto') {

@@ -15,7 +15,7 @@ import { disableSysProxy } from '../sys/sysproxy'
 let downloadCancelToken: CancelTokenSource | null = null
 
 export async function checkUpdate(): Promise<AppVersion | undefined> {
-  const { 'mixed-port': mixedPort = 7890 } = await getControledMihomoConfig()
+  const { 'mixed-port': mixedPort = 7897 } = await getControledMihomoConfig()
   const { updateChannel = 'stable' } = await getAppConfig()
   let url = 'https://github.com/xishang0128/sparkle/releases/latest/download/latest.yml'
   if (updateChannel == 'beta') {
@@ -42,7 +42,7 @@ export async function checkUpdate(): Promise<AppVersion | undefined> {
 }
 
 export async function downloadAndInstallUpdate(version: string): Promise<void> {
-  const { 'mixed-port': mixedPort = 7890 } = await getControledMihomoConfig()
+  const { 'mixed-port': mixedPort = 7897 } = await getControledMihomoConfig()
   let releaseTag = version
   if (version.includes('beta')) {
     releaseTag = 'pre-release'

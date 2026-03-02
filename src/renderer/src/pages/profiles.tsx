@@ -48,7 +48,7 @@ const Profiles: React.FC = () => {
     mutateProfileConfig
   } = useProfileConfig()
   const { appConfig } = useAppConfig()
-  const { useSubStore = true, useCustomSubStore = false, customSubStoreUrl = '' } = appConfig || {}
+  const { useSubStore = false, useCustomSubStore = false, customSubStoreUrl = '' } = appConfig || {}
   const { current, items } = profileConfig || {}
   const itemsArray = items ?? emptyItems
   const navigate = useNavigate()

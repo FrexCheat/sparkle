@@ -7,17 +7,17 @@ import { useState, useEffect, useMemo } from 'react'
 import { IoMdRefresh } from 'react-icons/io'
 
 const defaultGeoxUrl = {
-  geoip: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.dat',
-  geosite: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
-  mmdb: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
-  asn: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb'
+  geoip: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.dat',
+  geosite: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geosite-all.dat',
+  mmdb: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.metadb',
+  asn: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/Country-ASN-all.mmdb'
 }
 
 const GeoData: React.FC = () => {
   const { controledMihomoConfig, patchControledMihomoConfig } = useControledMihomoConfig()
   const {
     'geox-url': geoxUrlRaw,
-    'geodata-mode': geoMode = false,
+    'geodata-mode': geoMode = true,
     'geo-auto-update': geoAutoUpdate = false,
     'geo-update-interval': geoUpdateInterval = 24
   } = controledMihomoConfig || {}

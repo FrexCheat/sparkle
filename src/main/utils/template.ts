@@ -14,13 +14,13 @@ export const defaultConfig: AppConfig = {
   connectionDirection: 'asc',
   connectionOrderBy: 'time',
   connectionInterval: 500,
-  useSubStore: true,
+  useSubStore: false,
   proxyDisplayOrder: 'default',
   autoCheckUpdate: false,
   autoCloseConnection: true,
   closeMode: 'all',
-  controlDns: true,
-  controlSniff: true,
+  controlDns: false,
+  controlSniff: false,
   hosts: [],
   siderOrder: [
     'sysproxy',
@@ -62,7 +62,7 @@ export const defaultControledMihomoConfig: Partial<MihomoConfig> = {
   secret: '',
   ipv6: true,
   mode: 'rule',
-  'mixed-port': 7890,
+  'mixed-port': 7897,
   'socks-port': 0,
   port: 0,
   'redir-port': 0,
@@ -144,12 +144,12 @@ export const defaultControledMihomoConfig: Partial<MihomoConfig> = {
   },
   'geo-auto-update': false,
   'geo-update-interval': 24,
-  'geodata-mode': false,
+  'geodata-mode': true,
   'geox-url': {
-    geoip: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.dat',
-    geosite: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat',
-    mmdb: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb',
-    asn: 'https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb'
+    geoip: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.dat',
+    geosite: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geosite-all.dat',
+    mmdb: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.metadb',
+    asn: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/Country-ASN-all.mmdb'
   }
 }
 

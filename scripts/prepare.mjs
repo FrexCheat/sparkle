@@ -256,22 +256,22 @@ const resolveMmdb = () =>
 const resolveMetadb = () =>
   resolveResource({
     file: 'geoip.metadb',
-    downloadURL: `https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb`
+    downloadURL: `https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.metadb`
   })
 const resolveGeosite = () =>
   resolveResource({
     file: 'geosite.dat',
-    downloadURL: `https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat`
+    downloadURL: `https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geosite-all.dat`
   })
 const resolveGeoIP = () =>
   resolveResource({
     file: 'geoip.dat',
-    downloadURL: `https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat`
+    downloadURL: `https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.dat`
   })
 const resolveASN = () =>
   resolveResource({
     file: 'ASN.mmdb',
-    downloadURL: `https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb`
+    downloadURL: `https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/Country-ASN-all.mmdb`
   })
 const resolveEnableLoopback = () =>
   resolveResource({

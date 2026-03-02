@@ -30,7 +30,7 @@ let runtimeConfigStr: string,
 
 export async function generateProfile(): Promise<void> {
   const { current } = await getProfileConfig()
-  const { diffWorkDir = false, controlDns = true, controlSniff = true } = await getAppConfig()
+  const { diffWorkDir = false, controlDns = false, controlSniff = false } = await getAppConfig()
   const currentProfileConfig = await getProfile(current)
   rawProfileStr = await getProfileStr(current)
   currentProfileStr = stringifyYaml(currentProfileConfig)

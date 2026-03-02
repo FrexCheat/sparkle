@@ -20,8 +20,8 @@ const emptyArray: string[] = []
 const AdvancedSettings: React.FC = () => {
   const { appConfig, patchAppConfig } = useAppConfig()
   const {
-    controlDns = true,
-    controlSniff = true,
+    controlDns = false,
+    controlSniff = false,
     pauseSSID,
     mihomoCpuPriority = 'PRIORITY_NORMAL',
     autoLightweight = false,

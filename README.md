@@ -1,15 +1,6 @@
 # Sparkle
 
-<h3 align="center">Another <a href="https://github.com/MetaCubeX/mihomo">Mihomo</a> GUI</h3>
-
-<p align="center">
-  <a href="https://github.com/xishang0128/sparkle/releases">
-    <img src="https://img.shields.io/github/release/xishang0128/sparkle/all.svg">
-  </a>
-  <a href="https://t.me/+y7rcYjEKIiI1NzZl">
-    <img src="https://img.shields.io/badge/Telegram-Group-blue?logo=telegram">
-  </a>
-</p>
+<h3>A <a href="https://github.com/MetaCubeX/mihomo">Mihomo Core</a> GUI</h3>
 
 ## 特性
 
@@ -20,10 +11,6 @@
 - [x] 通过 WebDAV 一键备份和恢复配置
 - [x] 强大的覆写功能，任意修订配置文件
 - [x] 深度集成 Sub-Store，轻松管理订阅
-
-## 开发
-
-本项目为自用，绝大部分 pr 可能都不会合并，你可以自行 fork 修改。
 
 ### 环境要求
 
@@ -237,13 +224,3 @@ node --version
 - 所有命令都使用 pnpm 执行
 - 修改类型定义后需要重启 TypeScript 服务
 - 预加载脚本修改后需要重启应用
-
-## Star History
-
-<a href="https://www.star-history.com/#xishang0128/sparkle&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=xishang0128/sparkle&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=xishang0128/sparkle&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=xishang0128/sparkle&type=Date" />
- </picture>
-</a>

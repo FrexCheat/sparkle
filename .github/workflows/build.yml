@@ -16,11 +16,6 @@ jobs:
           - os: windows-latest
             arch: x64
             format: 7z
-          # - os: windows-latest
-          #   arch: x64
-          #   format: nsis
-          - os: macos-latest
-            arch: x64
           - os: macos-latest
             arch: arm64
 
@@ -28,10 +23,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Determine and Update Version
         shell: bash
@@ -55,16 +50,6 @@ jobs:
 
           jq --arg version "$RELEASE_VERSION" '.version = $version' package.json > tmp.json && mv tmp.json package.json
 
-      - name: Keep product name lowercase on Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sed -i "s/productName: Sparkle/productName: sparkle/" electron-builder.yml
-
-      - name: Install Build Tools
-        if: matrix.os == 'ubuntu-latest' && matrix.format == 'pacman'
-        run: |
-          sudo apt-get update && sudo apt-get install -y libarchive-tools fakeroot
-
       - name: Install Dependencies and Prepare
         env:
           npm_config_arch: ${{ matrix.arch }}
@@ -82,8 +67,6 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             pnpm build:win ${{ matrix.format }} --${{ matrix.arch }}
-          elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            pnpm build:linux ${{ matrix.format }} --${{ matrix.arch }}
           else
             pnpm build:mac --${{ matrix.arch }}
           fi
@@ -98,7 +81,7 @@ jobs:
           }
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.os }}-${{ matrix.arch }}${{ matrix.format && '-' || '' }}${{ matrix.format || '' }}
           path: |

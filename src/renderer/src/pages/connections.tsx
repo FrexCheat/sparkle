@@ -176,8 +176,12 @@ const Connections: React.FC = () => {
 
       const activeConns = info.connections.map((conn) => {
         const preConn = prevActiveMap.get(conn.id)
-        const downloadSpeed = preConn ? Math.max(0, Math.round((conn.download - preConn.download) * speedRatio)) : 0
-        const uploadSpeed = preConn ? Math.max(0, Math.round((conn.upload - preConn.upload) * speedRatio)) : 0
+        const downloadSpeed = preConn
+          ? Math.max(0, Math.round((conn.download - preConn.download) * speedRatio))
+          : 0
+        const uploadSpeed = preConn
+          ? Math.max(0, Math.round((conn.upload - preConn.upload) * speedRatio))
+          : 0
         const metadata =
           conn.metadata.type === 'Inner'
             ? { ...conn.metadata, process: 'mihomo', processPath: 'mihomo' }
@@ -553,7 +557,7 @@ const Connections: React.FC = () => {
             color={tab === 'active' ? 'primary' : 'danger'}
             selectedKey={tab}
             variant="underlined"
-            className="w-fit h-[32px]"
+            className="w-fit h-8"
             onSelectionChange={handleTabChange}
           >
             <Tab
@@ -599,7 +603,7 @@ const Connections: React.FC = () => {
           <Select
             classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
             size="sm"
-            className="w-[180px] min-w-[120px]"
+            className="w-45 min-w-30"
             selectedKeys={new Set([connectionOrderBy])}
             disallowEmptySelection={true}
             onSelectionChange={handleOrderByChange}

@@ -98,7 +98,7 @@ const Mihomo: React.FC = () => {
   const handleCoreUpgrade = async (): Promise<void> => {
     try {
       setUpgrading(true)
-      await mihomoUpgrade()
+      await mihomoUpgrade(core === 'mihomo' ? 'release' : 'alpha')
       setTimeout(() => PubSub.publish('mihomo-core-changed'), 2000)
     } catch (e) {
       if (typeof e === 'string' && e.includes('already using latest version')) {
@@ -130,6 +130,8 @@ const Mihomo: React.FC = () => {
   }
 
   const handlePermissionModeChange = async (key: string): Promise<void> => {
+    if (key === corePermissionMode) return
+
     if (platform === 'win32') {
       if (key !== 'elevated') {
         if (await checkElevateTask()) {

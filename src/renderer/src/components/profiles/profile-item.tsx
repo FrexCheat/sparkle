@@ -8,10 +8,10 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-  Progress,
   Tooltip
 } from '@heroui/react'
-import { calcPercent, calcTraffic } from '@renderer/utils/calc'
+import { Meter } from '@heroui-v3/react'
+import { calcTraffic } from '@renderer/utils/calc'
 import { IoMdMore, IoMdRefresh } from 'react-icons/io'
 import dayjs from 'dayjs'
 import React, { Key, useEffect, useMemo, useState } from 'react'
@@ -42,6 +42,7 @@ interface MenuItem {
   color: 'default' | 'danger'
   className: string
 }
+
 const ProfileItem: React.FC<Props> = (props) => {
   const {
     info,
@@ -199,11 +200,7 @@ const ProfileItem: React.FC<Props> = (props) => {
         />
       )}
       {showQrCode && info.url && (
-        <QRCodeModal
-          title={info.name}
-          url={info.url}
-          onClose={() => setShowQrCode(false)}
-        />
+        <QRCodeModal title={info.name} url={info.url} onClose={() => setShowQrCode(false)} />
       )}
       {confirmOpen && (
         <ConfirmModal
@@ -346,13 +343,23 @@ const ProfileItem: React.FC<Props> = (props) => {
               </div>
             )}
             {extra && (
-              <Progress
-                className="w-full"
-                classNames={{
-                  indicator: isCurrent ? 'bg-primary-foreground' : 'bg-foreground'
-                }}
-                value={calcPercent(extra?.upload, extra?.download, extra?.total)}
-              />
+              <Meter maxValue={total} value={usage}>
+                <Meter.Track
+                  className={
+                    isCurrent
+                      ? 'h-2.5 bg-black/22 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.35)]'
+                      : undefined
+                  }
+                >
+                  <Meter.Fill
+                    className={
+                      isCurrent
+                        ? 'bg-(--color-accent-foreground) shadow-[0_0_8px_rgb(255_255_255/0.45)]'
+                        : undefined
+                    }
+                  />
+                </Meter.Track>
+              </Meter>
             )}
           </CardFooter>
         </div>

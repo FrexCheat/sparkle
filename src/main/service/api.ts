@@ -89,33 +89,59 @@ export const getProxyStatus = async (): Promise<Record<string, unknown>> => {
   return await instance.get('/sysproxy/status')
 }
 
+export const stopServiceApi = async (): Promise<Record<string, unknown>> => {
+  const instance = getServiceAxios()
+  return await instance.post('/service/stop')
+}
+
+export const restartServiceApi = async (): Promise<Record<string, unknown>> => {
+  const instance = getServiceAxios()
+  return await instance.post('/service/restart')
+}
+
 export const setPac = async (
   url: string,
   device?: string,
-  onlyActiveDevice?: boolean
+  onlyActiveDevice?: boolean,
+  useRegistry?: boolean
 ): Promise<void> => {
   const instance = getServiceAxios()
-  return await instance.post('/sysproxy/pac', { url, device, only_active_device: onlyActiveDevice })
+  return await instance.post('/sysproxy/pac', {
+    url,
+    device,
+    only_active_device: onlyActiveDevice,
+    use_registry: useRegistry
+  })
 }
 
 export const setProxy = async (
   server: string,
   bypass?: string,
   device?: string,
-  onlyActiveDevice?: boolean
+  onlyActiveDevice?: boolean,
+  useRegistry?: boolean
 ): Promise<void> => {
   const instance = getServiceAxios()
   return await instance.post('/sysproxy/proxy', {
     server,
     bypass,
     device,
-    only_active_device: onlyActiveDevice
+    only_active_device: onlyActiveDevice,
+    use_registry: useRegistry
   })
 }
 
-export const disableProxy = async (device?: string, onlyActiveDevice?: boolean): Promise<void> => {
+export const disableProxy = async (
+  device?: string,
+  onlyActiveDevice?: boolean,
+  useRegistry?: boolean
+): Promise<void> => {
   const instance = getServiceAxios()
-  return await instance.post('/sysproxy/disable', { device, only_active_device: onlyActiveDevice })
+  return await instance.post('/sysproxy/disable', {
+    device,
+    only_active_device: onlyActiveDevice,
+    use_registry: useRegistry
+  })
 }
 
 export const setSysDns = async (device?: string, servers?: string[]): Promise<void> => {

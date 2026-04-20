@@ -8,7 +8,7 @@ import Viewer from './viewer'
 import useSWR from 'swr'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Chip } from '@heroui/react'
+import { Button, Chip, Divider } from '@heroui/react'
 import { IoMdRefresh } from 'react-icons/io'
 import { CgLoadbarDoc } from 'react-icons/cg'
 import { MdEditDocument, MdQrCode2 } from 'react-icons/md'
@@ -16,6 +16,7 @@ import QRCodeModal from '../base/base-qrcode-modal'
 import dayjs from 'dayjs'
 import { calcTraffic } from '@renderer/utils/calc'
 import { getHash } from '@renderer/utils/hash'
+import { Meter } from '@heroui-v3/react'
 
 const ProxyProvider: React.FC = () => {
   const [showDetails, setShowDetails] = useState({
@@ -122,7 +123,7 @@ const ProxyProvider: React.FC = () => {
           }
         />
       )}
-      <SettingItem title="代理集合" divider>
+      <SettingItem compatKey="legacy" title="代理集合" divider>
         <Button
           size="sm"
           color="primary"
@@ -138,6 +139,7 @@ const ProxyProvider: React.FC = () => {
       {providers.map((provider, index) => (
         <Fragment key={provider.name}>
           <SettingItem
+            compatKey="legacy"
             title={provider.name}
             actions={
               <Chip className="ml-2" size="sm">
@@ -148,13 +150,9 @@ const ProxyProvider: React.FC = () => {
           >
             <div className="flex h-8 leading-8 text-foreground-500">
               <div>{dayjs(provider.updatedAt).fromNow()}</div>
-              {/* <Button isIconOnly className="ml-2" size="sm">
-                <IoMdEye className="text-lg" />
-              </Button> */}
               {provider.vehicleType === 'HTTP' && (
                 <Button
                   isIconOnly
-                  title="二维码"
                   className="ml-2"
                   size="sm"
                   onPress={() => onShowQrCode(provider.name)}
@@ -164,7 +162,6 @@ const ProxyProvider: React.FC = () => {
               )}
               <Button
                 isIconOnly
-                title={provider.vehicleType == 'File' ? '编辑' : '查看'}
                 className="ml-2"
                 size="sm"
                 onPress={() => {
@@ -185,7 +182,6 @@ const ProxyProvider: React.FC = () => {
               </Button>
               <Button
                 isIconOnly
-                title="更新"
                 className="ml-2"
                 size="sm"
                 onPress={() => {
@@ -197,22 +193,35 @@ const ProxyProvider: React.FC = () => {
             </div>
           </SettingItem>
           {provider.subscriptionInfo && (
-            <SettingItem
-              divider={index !== providers.length - 1}
-              title={
-                <div className="text-foreground-500">
-                  {`${calcTraffic(
-                    provider.subscriptionInfo.Upload + provider.subscriptionInfo.Download
-                  )} / ${calcTraffic(provider.subscriptionInfo.Total)}`}
+            <>
+              <SettingItem
+                compatKey="legacy"
+                title={
+                  <div className="text-foreground-500">
+                    {`${calcTraffic(
+                      provider.subscriptionInfo.Upload + provider.subscriptionInfo.Download
+                    )} / ${calcTraffic(provider.subscriptionInfo.Total)}`}
+                  </div>
+                }
+              >
+                <div className="h-8 leading-8 text-foreground-500">
+                  {provider.subscriptionInfo.Expire
+                    ? dayjs.unix(provider.subscriptionInfo.Expire).format('YYYY-MM-DD')
+                    : '长期有效'}
                 </div>
-              }
-            >
-              <div className="h-8 leading-8 text-foreground-500">
-                {provider.subscriptionInfo.Expire
-                  ? dayjs.unix(provider.subscriptionInfo.Expire).format('YYYY-MM-DD')
-                  : '长期有效'}
-              </div>
-            </SettingItem>
+              </SettingItem>
+              <Meter
+                aria-label={`${provider.name} 流量使用`}
+                className="w-full"
+                maxValue={provider.subscriptionInfo.Total}
+                value={provider.subscriptionInfo.Upload + provider.subscriptionInfo.Download}
+              >
+                <Meter.Track>
+                  <Meter.Fill />
+                </Meter.Track>
+              </Meter>
+              {index !== providers.length - 1 && <Divider className="my-2" />}
+            </>
           )}
         </Fragment>
       ))}

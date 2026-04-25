@@ -4,7 +4,7 @@ import { app } from 'electron'
 import path from 'path'
 import { execSync } from 'child_process'
 import { getAppConfigSync } from '../config/app'
-import { checkCorePermissionSync } from '../core/manager'
+import { checkCorePermissionPathSync } from '../core/permission-check'
 
 export const homeDir = app.getPath('home')
 
@@ -68,7 +68,7 @@ export function mihomoIpcPath(): string {
   if (core === 'system') {
     return '/tmp/sparkle-mihomo-external.sock'
   }
-  if (!checkCorePermissionSync(core as 'mihomo' | 'mihomo-alpha')) {
+  if (!checkCorePermissionPathSync(mihomoCorePath(core))) {
     return '/tmp/sparkle-mihomo-api-noperm.sock'
   }
   return '/tmp/sparkle-mihomo-api.sock'
@@ -109,6 +109,10 @@ function systemCorePath(): string {
 export function servicePath(): string {
   const isWin = process.platform === 'win32'
   return path.join(resourcesFilesDir(), `sparkle-service${isWin ? '.exe' : ''}`)
+}
+
+export function serviceAuthStorePath(): string {
+  return path.join(dataDir(), 'service-auth.json')
 }
 
 export function appConfigPath(): string {
@@ -167,16 +171,26 @@ export function logDir(): string {
   return path.join(dataDir(), 'logs')
 }
 
-export function logPath(): string {
+function datedLogPath(prefix?: string): string {
   const date = new Date()
   const name = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-  return path.join(logDir(), `${name}.log`)
+  return path.join(logDir(), `${prefix ? `${prefix}-` : ''}${name}.log`)
+}
+
+export function logPath(): string {
+  return datedLogPath()
+}
+
+export function appLogPath(): string {
+  return datedLogPath('app')
+}
+
+export function coreLogPath(): string {
+  return datedLogPath('core')
 }
 
 export function substoreLogPath(): string {
-  const date = new Date()
-  const name = `sub-store-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-  return path.join(logDir(), `${name}.log`)
+  return datedLogPath('sub-store')
 }
 
 function hasCommand(command: string): boolean {

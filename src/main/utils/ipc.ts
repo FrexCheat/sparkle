@@ -19,6 +19,7 @@ import {
   mihomoVersion,
   mihomoConfig,
   patchMihomoConfig,
+  restartMihomoLogs,
   restartMihomoConnections,
   mihomoRulesDisable
 } from '../core/mihomoApi'
@@ -60,14 +61,17 @@ import {
   subStorePort
 } from '../resolve/server'
 import {
-  manualGrantCorePermition,
   quitWithoutCore,
   restartCore,
   startNetworkDetection,
-  stopNetworkDetection,
-  revokeCorePermission,
-  checkCorePermission
+  stopCore,
+  stopNetworkDetection
 } from '../core/manager'
+import {
+  checkCorePermission,
+  manualGrantCorePermition,
+  revokeCorePermission
+} from '../core/permission'
 import { triggerSysProxy } from '../sys/sysproxy'
 import { checkUpdate, downloadAndInstallUpdate, cancelUpdate } from '../resolve/autoUpdater'
 import {
@@ -91,7 +95,8 @@ import {
   testServiceConnection,
   restartService
 } from '../service/manager'
-import { findSystemMihomo } from '../utils/dirs'
+import { patchCoreProfile } from '../service/api'
+import { coreLogPath, findSystemMihomo, logDir } from './dirs'
 import {
   getRuntimeConfig,
   getRuntimeConfigStr,
@@ -119,7 +124,6 @@ import {
   writeTheme
 } from '../resolve/theme'
 import { subStoreCollections, subStoreSubs } from '../core/subStoreApi'
-import { logDir } from './dirs'
 import path from 'path'
 import v8 from 'v8'
 import { getGistUrl } from '../resolve/gistApi'
@@ -128,6 +132,7 @@ import { startMonitor } from '../resolve/trafficMonitor'
 import { closeFloatingWindow, showContextMenu, showFloatingWindow } from '../resolve/floatingWindow'
 import { getAppName } from './appName'
 import { getUserAgent } from './userAgent'
+import { appendAppLog, clearCachedMihomoLogs, getCachedMihomoLogs } from './log'
 
 function ipcErrorWrapper<T>( // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fn: (...args: any[]) => Promise<T> // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,6 +156,32 @@ function ipcErrorWrapper<T>( // eslint-disable-next-line @typescript-eslint/no-e
     }
   }
 }
+
+async function patchAppConfigWithServiceSync(patch: Partial<AppConfig>): Promise<void> {
+  await patchAppConfig(patch)
+
+  if (!('saveLogs' in patch || 'maxLogFileSizeMB' in patch)) {
+    return
+  }
+
+  const {
+    corePermissionMode = 'elevated',
+    saveLogs = true,
+    maxLogFileSizeMB = 20
+  } = await getAppConfig()
+  if (corePermissionMode !== 'service') {
+    return
+  }
+
+  void patchCoreProfile({
+    log_path: coreLogPath(),
+    save_logs: saveLogs,
+    max_log_file_size_mb: maxLogFileSizeMB
+  }).catch((error) => {
+    void appendAppLog(`[Service]: sync core log config failed, ${error}\n`)
+  })
+}
+
 export function registerIpcMainHandlers(): void {
   ipcMain.handle('mihomoVersion', ipcErrorWrapper(mihomoVersion))
   ipcMain.handle('mihomoConfig', ipcErrorWrapper(mihomoConfig))
@@ -184,11 +215,16 @@ export function registerIpcMainHandlers(): void {
   )
   ipcMain.handle('mihomoRulesDisable', (_e, rules) => ipcErrorWrapper(mihomoRulesDisable)(rules))
   ipcMain.handle('patchMihomoConfig', (_e, patch) => ipcErrorWrapper(patchMihomoConfig)(patch))
+  ipcMain.handle('restartMihomoLogs', ipcErrorWrapper(restartMihomoLogs))
   ipcMain.handle('checkAutoRun', ipcErrorWrapper(checkAutoRun))
   ipcMain.handle('enableAutoRun', ipcErrorWrapper(enableAutoRun))
   ipcMain.handle('disableAutoRun', ipcErrorWrapper(disableAutoRun))
   ipcMain.handle('getAppConfig', (_e, force) => ipcErrorWrapper(getAppConfig)(force))
-  ipcMain.handle('patchAppConfig', (_e, config) => ipcErrorWrapper(patchAppConfig)(config))
+  ipcMain.handle('getCachedMihomoLogs', () => getCachedMihomoLogs())
+  ipcMain.handle('clearCachedMihomoLogs', () => clearCachedMihomoLogs())
+  ipcMain.handle('patchAppConfig', (_e, config) =>
+    ipcErrorWrapper(patchAppConfigWithServiceSync)(config)
+  )
   ipcMain.handle('getControledMihomoConfig', (_e, force) =>
     ipcErrorWrapper(getControledMihomoConfig)(force)
   )
@@ -219,6 +255,7 @@ export function registerIpcMainHandlers(): void {
   ipcMain.handle('getOverride', (_e, id, ext) => ipcErrorWrapper(getOverride)(id, ext))
   ipcMain.handle('setOverride', (_e, id, ext, str) => ipcErrorWrapper(setOverride)(id, ext, str))
   ipcMain.handle('restartCore', ipcErrorWrapper(restartCore))
+  ipcMain.handle('stopCore', ipcErrorWrapper(stopCore))
   ipcMain.handle('restartMihomoConnections', ipcErrorWrapper(restartMihomoConnections))
   ipcMain.handle('startMonitor', (_e, detached) => ipcErrorWrapper(startMonitor)(detached))
   ipcMain.handle('triggerSysProxy', (_e, enable, onlyActiveDevice, useRegistry) =>

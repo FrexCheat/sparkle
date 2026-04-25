@@ -101,6 +101,10 @@ export async function patchMihomoConfig(patch: Partial<MihomoConfig>): Promise<v
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('patchMihomoConfig', patch))
 }
 
+export async function restartMihomoLogs(): Promise<void> {
+  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('restartMihomoLogs'))
+}
+
 export async function checkAutoRun(): Promise<boolean> {
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('checkAutoRun'))
 }
@@ -115,6 +119,16 @@ export async function disableAutoRun(): Promise<void> {
 
 export async function getAppConfig(force = false): Promise<AppConfig> {
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('getAppConfig', force))
+}
+
+export async function getCachedMihomoLogs(): Promise<
+  Array<ControllerLog & { id?: string; seq?: number }>
+> {
+  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('getCachedMihomoLogs'))
+}
+
+export async function clearCachedMihomoLogs(): Promise<void> {
+  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('clearCachedMihomoLogs'))
 }
 
 export async function patchAppConfig(patch: Partial<AppConfig>): Promise<void> {
@@ -221,6 +235,10 @@ export async function setOverride(id: string, ext: 'js' | 'yaml', str: string): 
 
 export async function restartCore(): Promise<void> {
   return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('restartCore'))
+}
+
+export async function stopCore(): Promise<void> {
+  return ipcErrorWrapper(await window.electron.ipcRenderer.invoke('stopCore'))
 }
 
 export async function restartMihomoConnections(): Promise<void> {

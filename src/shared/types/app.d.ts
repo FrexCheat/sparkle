@@ -83,7 +83,11 @@ interface AppConfig {
   autoCloseConnection: boolean
   closeMode: 'all' | 'group'
   sysProxy: ISysProxyConfig
+  saveLogs?: boolean
   maxLogDays: number
+  maxLogFileSizeMB?: number
+  maxLogEntries?: number
+  realtimeLogLevel?: LogLevel
   userAgent?: string
   delayTestConcurrency?: number
   delayTestUrl?: string

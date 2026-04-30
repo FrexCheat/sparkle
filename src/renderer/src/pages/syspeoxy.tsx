@@ -74,7 +74,9 @@ const Sysproxy: React.FC = () => {
     bypass: sysProxy.bypass ?? defaultBypass,
     mode: sysProxy.mode ?? 'manual',
     pacScript: sysProxy.pacScript ?? defaultPacScript,
-    settingMode: sysProxy.settingMode ?? 'exec'
+    settingMode: sysProxy.settingMode ?? 'exec',
+    guard: sysProxy.guard ?? false,
+    guardNotify: sysProxy.guardNotify ?? false
   })
   useEffect(() => {
     originSetValues((prev) => ({
@@ -179,14 +181,20 @@ const Sysproxy: React.FC = () => {
             color="primary"
             selectedKey={values.settingMode}
             onSelectionChange={(key) => {
-              setValues({ ...values, settingMode: key as 'exec' | 'service' })
+              const settingMode = key as 'exec' | 'service'
+              setValues({
+                ...values,
+                settingMode,
+                guard: settingMode === 'service' ? values.guard : false,
+                guardNotify: settingMode === 'service' ? values.guardNotify : false
+              })
             }}
           >
             <Tab key="exec" title="执行命令" />
             <Tab key="service" title="服务模式" />
           </Tabs>
         </SettingItem>
-        {platform !== 'linux' && (
+        {platform !== 'linux' && values.settingMode === 'service' && (
           <SettingItem
             compatKey="legacy"
             title="仅为活跃接口设置"
@@ -211,6 +219,51 @@ const Sysproxy: React.FC = () => {
               isDisabled={!values.settingMode || values.settingMode !== 'service'}
               onValueChange={(v) => {
                 patchAppConfig({ onlyActiveDevice: v })
+              }}
+            />
+          </SettingItem>
+        )}
+        {values.settingMode === 'service' && (
+          <SettingItem
+            compatKey="legacy"
+            title="系统代理守护"
+            actions={
+              <Tooltip content={<div>检测到系统代理被修改后自动恢复，仅服务模式下生效</div>}>
+                <Button isIconOnly size="sm" variant="light">
+                  <IoIosHelpCircle className="text-lg" />
+                </Button>
+              </Tooltip>
+            }
+            divider
+          >
+            <Switch
+              size="sm"
+              isSelected={values.guard}
+              onValueChange={(v) => {
+                setValues({ ...values, guard: v, guardNotify: v ? values.guardNotify : false })
+              }}
+            />
+          </SettingItem>
+        )}
+        {values.settingMode === 'service' && values.guard && (
+          <SettingItem
+            compatKey="legacy"
+            title="守护通知"
+            actions={
+              <Tooltip content={<div>系统代理恢复成功或失败时发送通知</div>}>
+                <Button isIconOnly size="sm" variant="light">
+                  <IoIosHelpCircle className="text-lg" />
+                </Button>
+              </Tooltip>
+            }
+            divider
+          >
+            <Switch
+              size="sm"
+              isSelected={values.guardNotify}
+              isDisabled={!values.guard}
+              onValueChange={(v) => {
+                setValues({ ...values, guardNotify: v })
               }}
             />
           </SettingItem>

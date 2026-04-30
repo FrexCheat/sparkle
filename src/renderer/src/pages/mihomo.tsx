@@ -20,7 +20,6 @@ import {
   installService,
   uninstallService,
   startService,
-  stopService,
   initService,
   restartService
 } from '@renderer/utils/ipc'
@@ -174,12 +173,6 @@ const Mihomo: React.FC = () => {
           }}
           onUninstall={async () => {
             await uninstallService()
-            if (corePermissionMode === 'service') {
-              await patchAppConfig({ corePermissionMode: 'elevated' })
-              await restartCore()
-              new Notification('服务卸载成功，已切换到直接运行')
-              return
-            }
             new Notification('服务卸载成功')
           }}
           onStart={async () => {
@@ -189,10 +182,6 @@ const Mihomo: React.FC = () => {
           onRestart={async () => {
             await restartService()
             new Notification('服务重启成功')
-          }}
-          onStop={async () => {
-            await stopService()
-            new Notification('服务停止成功')
           }}
         />
       )}

@@ -10,6 +10,8 @@ interface ISysProxyConfig {
   bypass?: string[]
   pacScript?: string
   settingMode?: 'exec' | 'service'
+  guard?: boolean
+  guardNotify?: boolean
 }
 
 interface IHost {
@@ -90,6 +92,7 @@ interface AppConfig {
   realtimeLogLevel?: LogLevel
   userAgent?: string
   delayTestConcurrency?: number
+  delayTestUseGroupApi?: boolean
   delayTestUrl?: string
   delayTestUrlScope?: 'group' | 'global'
   delayTestTimeout?: number

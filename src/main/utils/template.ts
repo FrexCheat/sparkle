@@ -41,7 +41,7 @@ export const defaultConfig: AppConfig = {
     'substore'
   ],
   siderWidth: 250,
-  sysProxy: { enable: false, mode: 'manual' },
+  sysProxy: { enable: false, mode: 'manual', guard: false, guardNotify: false },
   disableLoopbackDetector: false,
   disableEmbedCA: false,
   disableSystemCA: false,
@@ -52,6 +52,8 @@ export const defaultConfig: AppConfig = {
   groupDisplayLayout: 'double',
   autoLightweightMode: 'core',
   coreStartupMode: 'post-up',
+  delayTestConcurrency: 50,
+  delayTestUseGroupApi: false,
   delayTestUrlScope: 'group'
 }
 

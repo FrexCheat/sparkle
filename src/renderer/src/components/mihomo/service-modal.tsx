@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { Button, Spinner, Card, CardBody, Chip, Divider } from '@heroui/react'
 import { Modal } from '@heroui-v3/react'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { serviceStatus, testServiceConnection } from '@renderer/utils/ipc'
 
 interface Props {
@@ -11,48 +10,48 @@ interface Props {
   onUninstall: () => Promise<void>
   onStart: () => Promise<void>
   onRestart: () => Promise<void>
-  onStop: () => Promise<void>
 }
 
-type ServiceStatusType = 'running' | 'stopped' | 'not-installed' | 'unknown' | 'need-init'
+type ServiceStatusType = Awaited<ReturnType<typeof serviceStatus>>
 type ConnectionStatusType = 'connected' | 'disconnected' | 'checking' | 'unknown'
 
+function isUserCancelledError(error: unknown): boolean {
+  const errorMsg = String(error)
+  return errorMsg.includes('用户取消操作') || errorMsg.includes('UserCancelledError')
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function readServiceStatus(): Promise<ServiceStatusType> {
+  try {
+    return await serviceStatus()
+  } catch {
+    return 'not-installed'
+  }
+}
+
 const ServiceModal: React.FC<Props> = (props) => {
-  const { onChange, onInit, onInstall, onUninstall, onStart, onStop, onRestart } = props
-  useAppConfig()
+  const { onChange, onInit, onInstall, onUninstall, onStart, onRestart } = props
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<ServiceStatusType | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatusType>('checking')
 
-  const checkServiceConnection = useCallback(async (): Promise<void> => {
-    if (status === 'running') {
-      try {
-        setConnectionStatus('checking')
-        const connected = await testServiceConnection()
-        setConnectionStatus(connected ? 'connected' : 'disconnected')
-      } catch {
-        setConnectionStatus('disconnected')
-      }
-    } else {
+  const refreshServiceStatus = useCallback(async (nextStatus?: ServiceStatusType) => {
+    const result = nextStatus ?? (await readServiceStatus())
+    setStatus(result)
+
+    if (result !== 'running') {
       setConnectionStatus('disconnected')
+      return result
     }
-  }, [status])
 
-  useEffect(() => {
-    const checkStatus = async (): Promise<void> => {
-      try {
-        const result = await serviceStatus()
-        setStatus(result)
-      } catch {
-        setStatus('not-installed')
-      }
-    }
-    checkStatus()
+    setConnectionStatus('checking')
+    const connected = await testServiceConnection().catch(() => false)
+    setConnectionStatus(connected ? 'connected' : 'disconnected')
+    return result
   }, [])
-
-  useEffect(() => {
-    checkServiceConnection()
-  }, [status, checkServiceConnection])
 
   const handleAction = async (
     action: () => Promise<void>,
@@ -62,34 +61,31 @@ const ServiceModal: React.FC<Props> = (props) => {
     try {
       await action()
 
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      await delay(500)
 
-      let result = await serviceStatus()
+      let result = await readServiceStatus()
 
       if (isStartAction) {
         let retries = 5
         while (retries > 0 && result === 'stopped') {
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-          result = await serviceStatus()
+          await delay(1000)
+          result = await readServiceStatus()
           retries--
         }
       }
 
-      setStatus(result)
-      await checkServiceConnection()
+      await refreshServiceStatus(result)
     } catch (e) {
-      const errorMsg = String(e)
-      if (errorMsg.includes('用户取消操作') || errorMsg.includes('UserCancelledError')) {
-        const result = await serviceStatus()
-        setStatus(result)
-        await checkServiceConnection()
-        return
-      }
-      alert(e)
+      await refreshServiceStatus()
+      if (!isUserCancelledError(e)) alert(e)
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    void refreshServiceStatus()
+  }, [refreshServiceStatus])
 
   const getStatusText = (): string => {
     if (status === null) return '检查中'
@@ -102,6 +98,8 @@ const ServiceModal: React.FC<Props> = (props) => {
         return '未安装'
       case 'need-init':
         return '需要初始化'
+      case 'paused':
+        return '已暂停'
       default:
         return '未知状态'
     }
@@ -248,7 +246,7 @@ const ServiceModal: React.FC<Props> = (props) => {
                     onPress={() => handleAction(onInit)}
                     isLoading={loading}
                   >
-                    初始化
+                    {status === 'need-init' ? '初始化' : '重置认证'}
                   </Button>
                   <Button
                     size="sm"
@@ -259,17 +257,7 @@ const ServiceModal: React.FC<Props> = (props) => {
                   >
                     重启
                   </Button>
-                  {status === 'running' || status === 'need-init' ? (
-                    <Button
-                      size="sm"
-                      color="warning"
-                      variant="flat"
-                      onPress={() => handleAction(onStop)}
-                      isLoading={loading}
-                    >
-                      停止
-                    </Button>
-                  ) : (
+                  {status !== 'running' && status !== 'need-init' ? (
                     <Button
                       size="sm"
                       color="success"
@@ -279,7 +267,7 @@ const ServiceModal: React.FC<Props> = (props) => {
                     >
                       启动
                     </Button>
-                  )}
+                  ) : null}
                   <Button
                     size="sm"
                     color="danger"

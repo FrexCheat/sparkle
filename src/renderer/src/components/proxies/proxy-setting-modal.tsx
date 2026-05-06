@@ -24,13 +24,16 @@ const ProxySettingModal: React.FC<Props> = (props) => {
     proxyDisplayOrder = 'default',
     groupDisplayLayout = 'single',
     proxyDisplayLayout = 'double',
+    showGroupSelectedProxy = true,
+    showProxyDetailTooltip = false,
     autoCloseConnection = true,
     closeMode = 'all',
     delayTestUrl,
     delayTestUrlScope = 'group',
     delayTestUseGroupApi = false,
     delayTestConcurrency,
-    delayTestTimeout
+    delayTestTimeout,
+    rememberProxyGroupOpenState = false
   } = appConfig || {}
 
   const [url, setUrl] = useState(delayTestUrl ?? '')
@@ -119,9 +122,9 @@ const ProxySettingModal: React.FC<Props> = (props) => {
                   }}
                 />
               </SettingItem>
-              <SettingItem title="代理组详细信息" {...settingItemProps} divider>
+              <SettingItem title="代理组额外信息" {...settingItemProps} divider>
                 <SettingTabs
-                  ariaLabel="代理组详细信息"
+                  ariaLabel="代理组额外信息"
                   selectedKey={groupDisplayLayout}
                   options={[
                     { id: 'hidden', label: '隐藏' },
@@ -135,9 +138,9 @@ const ProxySettingModal: React.FC<Props> = (props) => {
                   }}
                 />
               </SettingItem>
-              <SettingItem title="代理节点详细信息" {...settingItemProps} divider>
+              <SettingItem title="代理节点额外信息" {...settingItemProps} divider>
                 <SettingTabs
-                  ariaLabel="代理节点详细信息"
+                  ariaLabel="代理节点额外信息"
                   selectedKey={proxyDisplayLayout}
                   options={[
                     { id: 'hidden', label: '隐藏' },
@@ -150,6 +153,45 @@ const ProxySettingModal: React.FC<Props> = (props) => {
                     })
                   }}
                 />
+              </SettingItem>
+              <SettingItem title="显示二级分组选中节点" {...settingItemProps} divider>
+                <Switch
+                  aria-label="显示二级分组选中节点"
+                  isSelected={showGroupSelectedProxy}
+                  onChange={(v) => {
+                    patchAppConfig({ showGroupSelectedProxy: v })
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </SettingItem>
+              <SettingItem title="悬停显示节点详情" {...settingItemProps} divider>
+                <Switch
+                  aria-label="悬停显示节点详情"
+                  isSelected={showProxyDetailTooltip}
+                  onChange={(v) => {
+                    patchAppConfig({ showProxyDetailTooltip: v })
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
+              </SettingItem>
+              <SettingItem title="记住代理组展开状态" {...settingItemProps} divider>
+                <Switch
+                  aria-label="记住代理组展开状态"
+                  isSelected={rememberProxyGroupOpenState}
+                  onChange={(v) => {
+                    patchAppConfig({ rememberProxyGroupOpenState: v })
+                  }}
+                >
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                </Switch>
               </SettingItem>
               <SettingItem title="切换节点时断开连接" {...settingItemProps} divider>
                 <Switch

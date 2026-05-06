@@ -65,6 +65,18 @@
   ${EndIf}
 !macroend
 
+!macro DisableSysProxy
+  StrCpy $R1 "$INSTDIR\resources\files\sparkle-service.exe"
+  ${If} ${FileExists} "$R1"
+    DetailPrint "Disabling system proxy: $R1"
+    nsExec::ExecToLog '"$R1" sysproxy disable'
+    Pop $R2
+    ${If} $R2 != 0
+      DetailPrint "Disable system proxy exited with code $R2"
+    ${EndIf}
+  ${EndIf}
+!macroend
+
 !macro StopSparkleServiceIfRunning
   !insertmacro QuerySparkleServiceState $R1
 
@@ -76,6 +88,7 @@
     Pop $R2
     Pop $R3
     !insertmacro WaitSparkleServiceStopped
+    !insertmacro DisableSysProxy
   ${EndIf}
 !macroend
 
@@ -85,6 +98,10 @@
 !macroend
 
 !macro customInstall
+  ${ifNot} ${isUpdated}
+    CreateShortcut "$DESKTOP\${PRODUCT_FILENAME}.lnk" "$INSTDIR\${PRODUCT_FILENAME}.exe"
+  ${endIf}
+
   ${If} $sparkleServiceWasRunning == "true"
     StrCpy $R1 "$INSTDIR\resources\files\sparkle-service.exe"
     ${If} ${FileExists} "$R1"

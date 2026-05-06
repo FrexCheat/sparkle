@@ -111,7 +111,6 @@ const ControllerSetting: React.FC = () => {
               <Button
                 size="sm"
                 isIconOnly
-                title="生成密钥"
                 variant="light"
                 onPress={() => setSecretInput(generateRandomString(32))}
               >
@@ -176,7 +175,6 @@ const ControllerSetting: React.FC = () => {
                   <Button
                     size="sm"
                     isIconOnly
-                    title="更新面板"
                     variant="light"
                     isLoading={upgrading}
                     onPress={upgradeUI}
@@ -184,7 +182,6 @@ const ControllerSetting: React.FC = () => {
                     <IoMdCloudDownload className="text-lg" />
                   </Button>
                   <Button
-                    title="在浏览器中打开"
                     isIconOnly
                     size="sm"
                     className="app-nodrag"
@@ -240,6 +237,7 @@ const ControllerSetting: React.FC = () => {
                   </Button>
                 )}
                 <Select
+                  aria-label="外部 UI 来源"
                   classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
                   className="w-37.5"
                   size="sm"

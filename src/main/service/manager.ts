@@ -5,12 +5,7 @@ import { initServiceAPI, getServiceAxios, ping, test, ServiceAPIError } from './
 import { getAppConfig, patchAppConfig } from '../config/app'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
-import {
-  canPersistServiceAuthSecret,
-  loadServiceAuthSecret,
-  saveServiceAuthSecret,
-  type ServiceAuthSecret
-} from './auth-store'
+import { loadServiceAuthSecret, saveServiceAuthSecret, type ServiceAuthSecret } from './auth-store'
 
 let keyManager: KeyManager | null = null
 const execFilePromise = promisify(execFile)
@@ -49,15 +44,8 @@ async function loadServiceAuthFromLegacyConfig(): Promise<ServiceAuthSecret | nu
     return null
   }
 
-  if (canPersistServiceAuthSecret()) {
-    try {
-      await saveServiceAuthSecret(legacySecret)
-      await clearLegacyServiceAuth()
-    } catch {
-      // ignore and continue using the legacy value in memory
-    }
-  }
-
+  await saveServiceAuthSecret(legacySecret)
+  await clearLegacyServiceAuth()
   return legacySecret
 }
 
@@ -72,7 +60,7 @@ async function loadAvailableServiceAuth(): Promise<ServiceAuthSecret | null> {
       return storedSecret
     }
   } catch {
-    // ignore and fall back to the legacy config field
+    // ignore invalid auth storage and try the legacy config field
   }
 
   return await loadServiceAuthFromLegacyConfig()
@@ -102,10 +90,6 @@ async function ensurePersistedServiceAuth(target: KeyManager): Promise<ServiceAu
   if (existingSecret) {
     applyServiceAuthSecret(target, existingSecret)
     return existingSecret
-  }
-
-  if (!canPersistServiceAuthSecret()) {
-    throw new Error('当前系统安全存储不可用，无法初始化服务鉴权')
   }
 
   const generatedKeyPair: KeyPair = target.generateKeyPair()

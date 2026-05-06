@@ -33,6 +33,8 @@ interface AppConfig {
   proxyDisplayOrder: 'default' | 'delay' | 'name'
   proxyDisplayLayout: 'hidden' | 'single' | 'double'
   groupDisplayLayout: 'hidden' | 'single' | 'double'
+  showGroupSelectedProxy: boolean
+  showProxyDetailTooltip: boolean
   profileDisplayDate?: 'expire' | 'update'
   envType?: ('bash' | 'fish' | 'cmd' | 'powershell' | 'nushell')[]
   proxyCols: 'auto' | '1' | '2' | '3' | '4'
@@ -98,10 +100,12 @@ interface AppConfig {
   delayTestUrlScope?: 'group' | 'global'
   delayTestTimeout?: number
   encryptedPassword?: number[]
+  rememberProxyGroupOpenState?: boolean
   controlDns?: boolean
   controlSniff?: boolean
   useDockIcon?: boolean
   showTraffic?: boolean
+  customTrayIcon?: string
   useCustomTrayMenu?: boolean
   webdavUrl?: string
   webdavDir?: string

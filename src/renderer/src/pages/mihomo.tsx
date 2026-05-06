@@ -194,7 +194,6 @@ const Mihomo: React.FC = () => {
               <Button
                 size="sm"
                 isIconOnly
-                title="升级内核"
                 variant="light"
                 isLoading={upgrading}
                 onPress={handleCoreUpgrade}
@@ -206,6 +205,7 @@ const Mihomo: React.FC = () => {
           divider
         >
           <Select
+            aria-label="内核版本"
             classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
             className="w-37.5"
             size="sm"
@@ -223,6 +223,7 @@ const Mihomo: React.FC = () => {
         {core === 'system' && (
           <SettingItem compatKey="legacy" title="系统内核路径选择" divider>
             <Select
+              aria-label="系统内核路径"
               classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
               className="w-87.5"
               size="sm"
@@ -251,6 +252,7 @@ const Mihomo: React.FC = () => {
         )}
         <SettingItem compatKey="legacy" title="内核进程优先级" divider>
           <Select
+            aria-label="内核进程优先级"
             classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
             className="w-37.5"
             size="sm"

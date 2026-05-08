@@ -8,7 +8,7 @@ import {
   patchAppConfig,
   patchControledMihomoConfig
 } from '../config'
-import { app, dialog, ipcMain, Notification } from 'electron'
+import { app, ipcMain } from 'electron'
 import {
   startMihomoTraffic,
   startMihomoConnections,
@@ -45,7 +45,14 @@ import {
   type ServiceCoreEvent,
   type ServiceCoreLaunchProfile
 } from '../service/api'
+import { serviceStatus } from '../service/manager'
+import {
+  clearAppUpdateServiceFallbackPause,
+  getServiceFallbackPolicy,
+  shouldSkipServiceUnavailableFallback
+} from '../service/fallback'
 import { appendAppLog, createLogWritable, setMihomoLogSource } from '../utils/log'
+import { showNotification } from '../utils/notification'
 import { createCoreHookWaiter, createCoreStartupHook } from './startupHook'
 import { stopChildProcess } from './process-control'
 import {
@@ -85,10 +92,22 @@ let lastServiceCoreEventKey = ''
 let serviceCoreStartupActive = false
 let serviceCoreReconnectResumePromise: Promise<void> | null = null
 let serviceUnavailableModeFallbackPromise: Promise<void> | null = null
-const serviceConnectionRetryTimeout = 10000
 const serviceConnectionRetryInterval = 500
 
-setServiceUnavailableFallbackHandler((reason) => {
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
+setServiceUnavailableFallbackHandler(async (reason) => {
+  if (shouldSkipServiceUnavailableFallback()) {
+    await appendAppLog(
+      `[Manager]: skip service unavailable fallback during app update, ${reason}\n`
+    )
+    return
+  }
+
   if (!serviceUnavailableModeFallbackPromise) {
     serviceUnavailableModeFallbackPromise = fallbackUnavailableServiceModes(reason).finally(() => {
       serviceUnavailableModeFallbackPromise = null
@@ -114,7 +133,7 @@ async function startMihomoApiStreams(): Promise<void> {
 
 async function completeCoreInitialization(logLevel?: LogLevel): Promise<void> {
   const tasks: Promise<unknown>[] = [
-    new Promise<void>((resolve) => setTimeout(resolve, 100)).then(() => {
+    delay(100).then(() => {
       mainWindow?.webContents.send('groupsUpdated')
       mainWindow?.webContents.send('rulesUpdated')
     }),
@@ -122,11 +141,7 @@ async function completeCoreInitialization(logLevel?: LogLevel): Promise<void> {
   ]
 
   if (logLevel) {
-    tasks.push(
-      new Promise<void>((resolve) => setTimeout(resolve, 100)).then(() =>
-        patchMihomoConfig({ 'log-level': logLevel })
-      )
-    )
+    tasks.push(delay(100).then(() => patchMihomoConfig({ 'log-level': logLevel })))
   }
 
   await Promise.all(tasks)
@@ -142,7 +157,7 @@ async function waitForMihomoReady(): Promise<void> {
       await mihomoGroups()
       break
     } catch (error) {
-      await new Promise((resolve) => setTimeout(resolve, retryInterval))
+      await delay(retryInterval)
     }
   }
 }
@@ -154,23 +169,41 @@ async function waitForServiceCoreConnection(
     `[Manager]: Service connection failed, waiting before fallback, ${initialError}\n`
   )
 
-  if (!isServiceConnectionError(initialError)) {
+  const fallbackPolicy = getServiceFallbackPolicy()
+  const { pausedForAppUpdate, connectionRetryTimeout } = fallbackPolicy
+
+  if (!isServiceConnectionError(initialError) && !pausedForAppUpdate) {
     return { reachable: false, running: false, error: initialError }
+  }
+
+  const status = await getServiceStatusAfterConnectionError()
+  if (status && status !== 'running') {
+    if (!pausedForAppUpdate) {
+      await appendAppLog(`[Manager]: Service status is ${status}, fallback immediately\n`)
+      return { reachable: false, running: false, error: initialError }
+    }
+    await appendAppLog(`[Manager]: Service status is ${status} during app update, keep waiting\n`)
   }
 
   const startedAt = Date.now()
   let lastError = initialError
 
-  while (Date.now() - startedAt < serviceConnectionRetryTimeout) {
-    await new Promise((resolve) => setTimeout(resolve, serviceConnectionRetryInterval))
+  while (Date.now() - startedAt < connectionRetryTimeout) {
+    await delay(serviceConnectionRetryInterval)
 
     try {
       await getCoreStatus()
+      if (pausedForAppUpdate) {
+        await clearAppUpdateServiceFallbackPause()
+      }
       return { reachable: true, running: true, error: lastError }
     } catch (error) {
       lastError = error
       if (isServiceUnavailableError(error) && !isServiceConnectionError(error)) {
-        return { reachable: false, running: false, error }
+        if (!pausedForAppUpdate) {
+          return { reachable: false, running: false, error }
+        }
+        continue
       }
       if (!isServiceConnectionError(error)) {
         return { reachable: true, running: false, error }
@@ -179,9 +212,20 @@ async function waitForServiceCoreConnection(
   }
 
   await appendAppLog(
-    `[Manager]: Service still unavailable after ${serviceConnectionRetryTimeout}ms, ${lastError}\n`
+    `[Manager]: Service still unavailable after ${connectionRetryTimeout}ms, ${lastError}\n`
   )
   return { reachable: false, running: false, error: lastError }
+}
+
+async function getServiceStatusAfterConnectionError(): Promise<
+  Awaited<ReturnType<typeof serviceStatus>> | undefined
+> {
+  try {
+    return await serviceStatus()
+  } catch (error) {
+    await appendAppLog(`[Manager]: query service status failed before fallback, ${error}\n`)
+    return undefined
+  }
 }
 
 export async function startCore(detached = false): Promise<Promise<void>[]> {
@@ -364,7 +408,7 @@ export async function startCore(detached = false): Promise<Promise<void>[]> {
         const promises = await startCore()
         await Promise.all(promises)
       } catch (e) {
-        dialog.showErrorBox('内核启动出错', `${e}`)
+        void showNotification({ title: '内核启动出错', body: `${e}`, variant: 'danger' })
       }
     }
   }
@@ -479,7 +523,7 @@ export async function stopCore(force = false): Promise<void> {
       try {
         process.kill(pid, 0)
         process.kill(pid, 'SIGINT')
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await delay(1000)
         try {
           process.kill(pid, 0)
           process.kill(pid, 'SIGKILL')
@@ -590,7 +634,7 @@ async function handleServiceCoreEventStreamState(
 }
 
 async function resumeServiceCoreAfterReconnect(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  await delay(500)
   if (serviceCoreStartupActive) {
     return
   }
@@ -689,6 +733,7 @@ async function fallbackToElevatedCore(
   await patchAppConfig({ corePermissionMode: 'elevated' })
   mainWindow?.webContents.send('appConfigUpdated')
   floatingWindow?.webContents.send('appConfigUpdated')
+  void showNotification({ title: '服务不可用，已切换到非服务模式' })
   return startCore(detached)
 }
 
@@ -748,7 +793,7 @@ async function fallbackUnavailableServiceModes(reason: unknown): Promise<void> {
       await Promise.all(promises)
       mainWindow?.webContents.send('core-started')
     }
-    new Notification({ title: '服务不可用，已切换到非服务模式' }).show()
+    void showNotification({ title: '服务不可用，已切换到非服务模式' })
   } finally {
     mainWindow?.webContents.reload()
     floatingWindow?.webContents.reload()
@@ -761,7 +806,7 @@ export async function restartCore(): Promise<void> {
     const promises = await startCore()
     await Promise.all(promises)
   } catch (e) {
-    dialog.showErrorBox('内核启动出错', `${e}`)
+    void showNotification({ title: '内核启动出错', body: `${e}`, variant: 'danger' })
   }
 }
 
@@ -777,7 +822,7 @@ export async function keepCoreAlive(): Promise<void> {
       await writeFile(path.join(dataDir(), 'core.pid'), child.pid.toString())
     }
   } catch (e) {
-    dialog.showErrorBox('内核启动出错', `${e}`)
+    void showNotification({ title: '内核启动出错', body: `${e}`, variant: 'danger' })
   }
 }
 

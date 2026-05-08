@@ -10,18 +10,20 @@ import {
   cancelUpdate
 } from '@renderer/utils/ipc'
 import { useState, useEffect } from 'react'
-import UpdaterModal from '../updater/updater-modal'
+import UpdaterDrawer from '../updater/updater-drawer'
 import { version } from '@renderer/utils/init'
 import { IoIosHelpCircle } from 'react-icons/io'
 import { startTour } from '@renderer/utils/driver'
 import { useNavigate } from 'react-router-dom'
 import ConfirmModal from '../base/base-confirm'
+import { notify } from '@renderer/utils/notification'
 
 const Actions: React.FC = () => {
   const navigate = useNavigate()
   const [newVersion, setNewVersion] = useState('')
   const [changelog, setChangelog] = useState('')
   const [openUpdate, setOpenUpdate] = useState(false)
+  const [updateDrawerReopenSignal, setUpdateDrawerReopenSignal] = useState(0)
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [updateStatus, setUpdateStatus] = useState<{
@@ -57,14 +59,20 @@ const Actions: React.FC = () => {
     }
   }
 
+  const openUpdateDrawer = (): void => {
+    setOpenUpdate(true)
+    setUpdateDrawerReopenSignal((signal) => signal + 1)
+  }
+
   return (
     <>
       {openUpdate && (
-        <UpdaterModal
+        <UpdaterDrawer
           onClose={() => setOpenUpdate(false)}
           version={newVersion}
           changelog={changelog}
           updateStatus={updateStatus}
+          reopenSignal={updateDrawerReopenSignal}
           onCancel={handleCancelUpdate}
         />
       )}
@@ -100,12 +108,22 @@ const Actions: React.FC = () => {
                 if (version) {
                   setNewVersion(version.version)
                   setChangelog(version.changelog)
-                  setOpenUpdate(true)
+                  notify('发现新版本', {
+                    actionProps: {
+                      children: '查看内容',
+                      onPress: openUpdateDrawer,
+                      variant: 'secondary'
+                    },
+                    body: `${version.version} 版本就绪`,
+                    forceToast: true,
+                    timeout: 8000,
+                    variant: 'accent'
+                  })
                 } else {
-                  new window.Notification('当前已是最新版本', { body: '无需更新' })
+                  notify('当前已是最新版本', { body: '无需更新' })
                 }
               } catch (e) {
-                alert(e)
+                notify(e, { variant: 'danger' })
               } finally {
                 setCheckingUpdate(false)
               }

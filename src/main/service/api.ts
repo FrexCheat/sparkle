@@ -4,13 +4,14 @@ import WebSocket from 'ws'
 import { KeyManager } from './key'
 import { serviceIpcPath } from '../utils/dirs'
 import { appendAppLog } from '../utils/log'
+import { shouldSkipServiceUnavailableFallback } from './fallback'
 
 let serviceAxios: AxiosInstance | null = null
 let keyManager: KeyManager | null = null
 let serviceUnavailableFallbackHandler: ((reason: unknown) => Promise<void>) | null = null
 let serviceUnavailableFallbackTimer: NodeJS.Timeout | null = null
 let serviceUnavailableFallbackPromise: Promise<void> | null = null
-const serviceUnavailableFallbackDelay = 12000
+const serviceUnavailableFallbackDelay = 2000
 const serviceUnavailableStatuses = [401, 403, 409, 503]
 
 export class ServiceAPIError extends Error {
@@ -190,6 +191,7 @@ export function isServiceUnavailableError(error: unknown): boolean {
 }
 
 function scheduleServiceUnavailableFallback(reason: unknown): void {
+  if (shouldSkipServiceUnavailableFallback()) return
   if (serviceUnavailableFallbackTimer || serviceUnavailableFallbackPromise) return
 
   serviceUnavailableFallbackTimer = setTimeout(() => {
@@ -201,6 +203,7 @@ function scheduleServiceUnavailableFallback(reason: unknown): void {
 }
 
 async function runServiceUnavailableFallback(reason: unknown): Promise<void> {
+  if (shouldSkipServiceUnavailableFallback()) return
   if (await isServiceUsable()) return
 
   if (!serviceUnavailableFallbackHandler) {

@@ -5,6 +5,7 @@ import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-c
 import { mihomoUpgradeGeo } from '@renderer/utils/ipc'
 import { useState, useEffect, useMemo } from 'react'
 import { IoMdRefresh } from 'react-icons/io'
+import { notify } from '@renderer/utils/notification'
 
 const defaultGeoxUrl = {
   geoip: 'https://github.com/DustinWin/ruleset_geodata/releases/download/mihomo-geodata/geoip.dat',
@@ -133,9 +134,9 @@ const GeoData: React.FC = () => {
               setUpdating(true)
               try {
                 await mihomoUpgradeGeo()
-                new Notification('数据库更新成功')
+                notify('数据库更新成功', { variant: 'success' })
               } catch (e) {
-                alert(e)
+                notify(e, { variant: 'danger' })
               } finally {
                 setUpdating(false)
               }

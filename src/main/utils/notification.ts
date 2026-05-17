@@ -1,16 +1,20 @@
-import { BrowserWindow, Notification, ipcMain } from 'electron'
+import { BrowserWindow, Notification, ipcMain, shell } from 'electron'
 import { getAppConfig } from '../config/app'
 
 export type AppNotificationVariant = 'default' | 'accent' | 'success' | 'warning' | 'danger'
 type AppNotificationMode = 'system' | 'toast'
 
 export interface AppNotificationPayload {
+  id?: string
   title: string
   body?: string
+  persistent?: boolean
+  url?: string
   variant?: AppNotificationVariant
 }
 
 const pendingToastNotifications: AppNotificationPayload[] = []
+const systemNotifications = new Map<string, Notification>()
 
 ipcMain.on('app-notification-ready', (event) => {
   const window = BrowserWindow.fromWebContents(event.sender)
@@ -41,7 +45,46 @@ export async function showNotification(payload: AppNotificationPayload): Promise
     return
   }
 
-  new Notification({ title: notification.title, body: notification.body }).show()
+  const systemNotification = new Notification({
+    title: notification.title,
+    body: notification.body,
+    timeoutType: notification.persistent ? 'never' : 'default'
+  })
+  if (notification.url) {
+    systemNotification.on('click', () => {
+      void shell.openExternal(notification.url!)
+    })
+  }
+  if (notification.id) {
+    systemNotifications.get(notification.id)?.close()
+    systemNotifications.set(notification.id, systemNotification)
+    systemNotification.on('close', () => {
+      if (systemNotifications.get(notification.id!) === systemNotification) {
+        systemNotifications.delete(notification.id!)
+      }
+    })
+  }
+  systemNotification.show()
+}
+
+export function dismissNotification(id: string): void {
+  const notification = systemNotifications.get(id)
+  if (notification) {
+    notification.close()
+    systemNotifications.delete(id)
+  }
+
+  for (let index = pendingToastNotifications.length - 1; index >= 0; index--) {
+    if (pendingToastNotifications[index].id === id) {
+      pendingToastNotifications.splice(index, 1)
+    }
+  }
+
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed() && isMainRendererWindow(window)) {
+      window.webContents.send('app-notification-dismiss', id)
+    }
+  }
 }
 
 function getVisibleMainRendererWindow(): BrowserWindow | undefined {
@@ -73,8 +116,11 @@ function isMainRendererWindow(window: BrowserWindow): boolean {
 function normalizeNotificationPayload(payload: AppNotificationPayload): AppNotificationPayload {
   return {
     ...payload,
+    id: payload.id ? formatNotificationText(payload.id) : undefined,
     title: formatNotificationText(payload.title),
-    body: payload.body ? formatNotificationText(payload.body) : undefined
+    body: payload.body ? formatNotificationText(payload.body) : undefined,
+    persistent: payload.persistent,
+    url: payload.url ? formatNotificationText(payload.url) : undefined
   }
 }
 

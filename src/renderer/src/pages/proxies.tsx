@@ -350,8 +350,6 @@ const Proxies: React.FC = () => {
         setIsOpen((prev) => {
           const newOpen = [...prev]
           newOpen[index] = true
-          const groupName = groups[index]?.name
-          if (groupName) runtimeGroupOpenState.set(groupName, true)
           return newOpen
         })
         setTimeout(() => {
@@ -463,8 +461,6 @@ const Proxies: React.FC = () => {
           if (prev[index]) return prev
           const newOpen = [...prev]
           newOpen[index] = true
-          const groupName = groups[index]?.name
-          if (groupName) runtimeGroupOpenState.set(groupName, true)
           return newOpen
         })
       }, 0)

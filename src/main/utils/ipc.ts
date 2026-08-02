@@ -183,7 +183,7 @@ async function patchAppConfigWithServiceSync(patch: Partial<AppConfig>): Promise
     save_logs: saveLogs,
     max_log_file_size_mb: maxLogFileSizeMB
   }).catch((error) => {
-    void appendAppLog(`[Service]: sync core log config failed, ${error}\n`)
+    appendAppLog(`[Service]: sync core log config failed, ${error}\n`).catch(() => {})
   })
 
   return nextConfig
@@ -323,8 +323,8 @@ export function registerIpcMainHandlers(): void {
   ipcMain.handle('getCurrentProfileStr', ipcErrorWrapper(getCurrentProfileStr))
   ipcMain.handle('getOverrideProfileStr', ipcErrorWrapper(getOverrideProfileStr))
   ipcMain.handle('getRuntimeConfig', ipcErrorWrapper(getRuntimeConfig))
-  ipcMain.handle('downloadAndInstallUpdate', (_e, version) =>
-    ipcErrorWrapper(downloadAndInstallUpdate)(version)
+  ipcMain.handle('downloadAndInstallUpdate', (_e, version, tag) =>
+    ipcErrorWrapper(downloadAndInstallUpdate)(version, tag)
   )
   ipcMain.handle('checkUpdate', ipcErrorWrapper(checkUpdate))
   ipcMain.handle('cancelUpdate', ipcErrorWrapper(cancelUpdate))

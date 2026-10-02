@@ -80,15 +80,21 @@ jobs:
 
           jq --arg version "$RELEASE_VERSION" '.version = $version' package.json > tmp.json && mv tmp.json package.json
 
-      - name: Keep product name lowercase on Linux
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sed -i "s/productName: Sparkle/productName: sparkle/" electron-builder.yml
-
       - name: Install Build Tools
         if: matrix.os == 'ubuntu-latest' && matrix.format == 'pacman'
         run: |
           sudo apt-get update && sudo apt-get install -y libarchive-tools
+
+      - name: Adaptation to the loongarch64 architecture
+        env:
+          npm_config_arch: ${{ matrix.arch }}
+          npm_config_target_arch: ${{ matrix.arch }}
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'loong64'
+        shell: bash
+        run: |
+          LOONGARCH_OVERRIDES=$(pnpm config get overrides --json | jq '. + {"electron": "42.3.0", "electron-builder": "npm:@loongdotjs/electron-builder@26.15.6"}')
+          pnpm config set --location=project --json overrides "$LOONGARCH_OVERRIDES"
+          pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
 
       - name: Install Dependencies and Prepare
         env:
@@ -106,6 +112,7 @@ jobs:
             macos-latest-arm64) PNPM_TARGET_FLAGS="--os=current --os=darwin --cpu=current --cpu=arm64"; SPARKLE_NATIVE_PACKAGE="@uruhalushia/sparkle-native-darwin-arm64" ;;
             *) echo "Unsupported native target: ${{ matrix.os }}-${{ matrix.arch }}" && exit 1 ;;
           esac
+
           SKIP_PREPARE=1 pnpm install $PNPM_TARGET_FLAGS
 
           verify_native_package() {
